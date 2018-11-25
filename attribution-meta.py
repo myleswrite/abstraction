@@ -1,17 +1,19 @@
-import xmltodict, requests, time, json
+import xmltodict, requests, time, json, pandas
 from bs4 import BeautifulSoup
 
 wait = 0.2
 print("Hello, let's start by getting a valid sitemap")
 askurl = input("Please enter a valid sitemap: ")
-xmlurl = askurl
+filename = input("What do you want to call the saved file (without .ending)?")
 print("Getting the sitemap from " + askurl)
-sitemapreq = requests.get(xmlurl) # Go get the sitemap
+sitemapreq = requests.get(askurl) # Go get the sitemap
 if sitemapreq.status_code == 200: # Did we get a valid response back?
     print('Valid response received')
     if '/xml' in sitemapreq.headers['Content-Type']:
         thexml = xmltodict.parse(sitemapreq.text,xml_attribs=True)
         print('Total items: ' + str(len(thexml['urlset']['url'])))
+        if len(thexml['urlset']['url']) > 499: #Slow down if there are a lot of URLs to avoid problems.
+            wait = 1
         listurl = []
         complete = []
         lineno = 0
@@ -47,6 +49,16 @@ if sitemapreq.status_code == 200: # Did we get a valid response back?
                             metadescriptionlength = ''
                             )
         print(json.dumps(complete))
+        # Attempt to create a JSON
+        jsonname = filename + '.json'
+        f = open(jsonname,"w+")
+        f.write(json.dumps(complete))
+        f.close
+        print("Saved JSON")
+        # Attempt to create a CSV
+        csvname = filename + '.csv'
+        pandas.DataFrame(complete).to_csv(csvname, index=False)
+        print("Saved CSV")
     else:
         print('Invalid response')
 exit()
