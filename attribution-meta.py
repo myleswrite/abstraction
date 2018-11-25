@@ -26,8 +26,6 @@ if sitemapreq.status_code == 200: # Did we get a valid response back?
                 content = BeautifulSoup(page.text,'html.parser')
                 lineno += 1
                 line= dict(
-                            urlnumber = lineno,
-                            modified = key['lastmod'],
                             address = key['loc'],
                             status = page.status_code,
                             title = content.title.string,
@@ -37,6 +35,10 @@ if sitemapreq.status_code == 200: # Did we get a valid response back?
                         line['metadescription'] = tag.get("content", None)
                         line['metadescriptionlength'] = len(tag.get("content", None))
                 complete.append(line)
+                if 'lastmod' in key : #Is lastmod blank?
+                    line['modified'] = key['lastmod']
+                else:
+                    line['modified'] = '0'
             else:
                 lineno += 1
                 line = dict(
