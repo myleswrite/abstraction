@@ -1,10 +1,38 @@
-import xmltodict, requests, time, json, pandas
-from bs4 import BeautifulSoup
+#Import the required modules. I will tidy this up into a loop at some point
+
+try:  # For converting the XML to a dictionary
+    import xmltodict
+except:
+    print("xmltodict is required")
+try:  # For getting the URL response
+    import requests
+except:
+    print("requests is required")
+try:  # For waiting
+    import time
+except:
+    print("time is required")
+try:  # For saving as json
+    import json
+except:
+    print("json is required")
+try:  # For saving as CSV
+    import pandas
+except:
+    print("pandas is required")
+try: # For getting the meta descriptions
+    from bs4 import BeautifulSoup
+except:
+    print("BeautifulSoup is required")
+try: # For the save as option
+    from tkinter.filedialog import asksaveasfilename
+except:
+    print("tkinter.filedialog is required")
+
 
 wait = 0.2
 print("Hello, let's start by getting a valid sitemap")
-askurl = input("Please enter a valid sitemap: ")
-filename = input("What do you want to call the saved file (without .ending)?")
+askurl = input("Please enter a valid sitemap (there is no error checking here if you don't enter a valid URL): ")
 print("Getting the sitemap from " + askurl)
 sitemapreq = requests.get(askurl) # Go get the sitemap
 if sitemapreq.status_code == 200: # Did we get a valid response back?
@@ -51,16 +79,22 @@ if sitemapreq.status_code == 200: # Did we get a valid response back?
                             metadescriptionlength = ''
                             )
         print(json.dumps(complete))
-        # Attempt to create a JSON
-        jsonname = filename + '.json'
-        f = open(jsonname,"w+")
-        f.write(json.dumps(complete))
-        f.close
-        print("Saved JSON")
-        # Attempt to create a CSV
-        csvname = filename + '.csv'
-        pandas.DataFrame(complete).to_csv(csvname, index=False)
-        print("Saved CSV")
+        # Are we saving this anywhere?
+        dosave = input("Do you want to save a JSON and CSV — Type 'Y' for yes or anything else for no. ")
+        if dosave == 'Y' or dosave =='y': #If we're saving let's save
+            file_name = asksaveasfilename()
+            # Attempt to create a JSON
+            jsonname = file_name + '.json'
+            f = open(jsonname,"w+")
+            f.write(json.dumps(complete))
+            f.close
+            print("Saved JSON")
+            #Attempt to create a CSV
+            csvname = file_name + '.csv'
+            pandas.DataFrame(complete).to_csv(csvname, index=False)
+            print("Saved CSV")
+        else:
+            print("Okay we're done here.")
     else:
         print('Invalid response')
 exit()
