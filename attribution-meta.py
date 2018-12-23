@@ -1,33 +1,42 @@
+# -*- coding: utf-8 -*-
+
 #Import the required modules. I will tidy this up into a loop at some point
 
 try:  # For converting the XML to a dictionary
     import xmltodict
 except:
     print("xmltodict is required")
+    exit()
 try:  # For getting the URL response
     import requests
 except:
     print("requests is required")
+    exit()
 try:  # For waiting
     import time
 except:
     print("time is required")
+    exit()
 try:  # For saving as json
     import json
 except:
     print("json is required")
+    exit()
 try:  # For saving as CSV
     import pandas
 except:
     print("pandas is required")
+    exit()
 try: # For getting the meta descriptions
     from bs4 import BeautifulSoup
 except:
     print("BeautifulSoup is required")
+    exit()
 try: # For the save as option
     from tkinter.filedialog import asksaveasfilename
 except:
     print("tkinter.filedialog is required")
+    exit()
 
 
 wait = 0.2
