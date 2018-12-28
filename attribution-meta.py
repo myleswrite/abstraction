@@ -43,7 +43,7 @@ wait = 0.2
 print("Hello, let's start by getting a valid sitemap")
 askurl = input("Please enter a valid sitemap (there is no error checking here if you don't enter a valid URL): ")
 print("Getting the sitemap from " + askurl)
-sitemapreq = requests.get(askurl) # Go get the sitemap
+sitemapreq = requests.get(askurl,timeout=5.00) # Go get the sitemap
 if sitemapreq.status_code == 200: # Did we get a valid response back?
     print('Valid response received')
     if '/xml' in sitemapreq.headers['Content-Type']:
@@ -57,7 +57,7 @@ if sitemapreq.status_code == 200: # Did we get a valid response back?
         for key in thexml['urlset']['url']: # Create a list of urls from the sitemap
             time.sleep(wait) # Let's not flood requests?
             print('Working on url ' + key['loc'] + '\n')
-            page = requests.request('GET', key['loc'])
+            page = requests.request('GET', key['loc'],timeout=5.00)
             line = {}
             if page.status_code == 200: # Did we get a valid response back?
                 content = BeautifulSoup(page.text,'html.parser')
