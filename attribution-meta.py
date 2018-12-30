@@ -23,9 +23,9 @@ except:
     print("json is required")
     exit()
 try:  # For saving as CSV
-    import pandas
+    import csv
 except:
-    print("pandas is required")
+    print("csv is required")
     exit()
 try: # For getting the meta descriptions
     from bs4 import BeautifulSoup
@@ -58,35 +58,28 @@ if sitemapreq.status_code == 200: # Did we get a valid response back?
             time.sleep(wait) # Let's not flood requests?
             print('Working on url ' + key['loc'] + '\n')
             page = requests.request('GET', key['loc'],timeout=5.00)
-            line = {}
+            lineno += 1
+            line = dict(
+                urlnumber = lineno,
+                address = key['loc'],
+                status = page.status_code,
+            )
+            if 'lastmod' in key : #Is lastmod blank?
+                line['modified'] = key['lastmod']
+            else:
+                line['modified'] = '0'
             if page.status_code == 200: # Did we get a valid response back?
                 content = BeautifulSoup(page.text,'html.parser')
-                lineno += 1
-                line= dict(
-                            address = key['loc'],
-                            status = page.status_code,
-                            title = content.title.string,
-                            )
+                line['title'] = content.title.string
                 for tag in content.head.find_all("meta"):
                     if tag.get("name", None) == "description": # Is this a meta description?
                         line['metadescription'] = tag.get("content", None)
                         line['metadescriptionlength'] = len(tag.get("content", None))
-                complete.append(line)
-                if 'lastmod' in key : #Is lastmod blank?
-                    line['modified'] = key['lastmod']
-                else:
-                    line['modified'] = '0'
             else:
-                lineno += 1
-                line = dict(
-                            urlnumber = lineno,
-                            modified = key['lastmod'],
-                            address = key['loc'],
-                            status = page.status_code,
-                            title = '',
-                            metadescription ='',
-                            metadescriptionlength = ''
-                            )
+                line['title'] = ''
+                line['metadescription'] =''
+                line['metadescriptionlength'] = ''
+            complete.append(line)
         print(json.dumps(complete))
         # Are we saving this anywhere?
         dosave = input("Do you want to save a JSON and CSV — Type 'Y' for yes or anything else for no. ")
@@ -94,13 +87,18 @@ if sitemapreq.status_code == 200: # Did we get a valid response back?
             file_name = asksaveasfilename()
             # Attempt to create a JSON
             jsonname = file_name + '.json'
-            f = open(jsonname,"w+")
-            f.write(json.dumps(complete))
-            f.close
+            with open(jsonname,"w+") as f: # Write the JSON file
+                f.write(json.dumps(complete))
+                f.close
             print("Saved JSON")
             #Attempt to create a CSV
             csvname = file_name + '.csv'
-            pandas.DataFrame(complete).to_csv(csvname, index=False)
+            fieldnames = ['urlnumber','address','status','title','metadescription','metadescriptionlength','modified']
+            with open(csvname,'w+') as s: #Save the file
+                    w = csv.DictWriter(s, fieldnames = fieldnames)
+                    w.writeheader()
+                    for k in complete:
+                        w.writerow(k)
             print("Saved CSV")
         else:
             print("Okay we're done here.")
