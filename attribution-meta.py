@@ -38,26 +38,30 @@ except:
     print("tkinter.filedialog is required")
     exit()
 
-
 wait = 0.2
+heads = {
+    'User-Agent': 'attribution script',
+    }
+
 print("Hello, let's start by getting a valid sitemap")
 askurl = input("Please enter a valid sitemap (there is no error checking here if you don't enter a valid URL): ")
 print("Getting the sitemap from " + askurl)
-sitemapreq = requests.get(askurl,timeout=5.00) # Go get the sitemap
+sitemapreq = requests.get(askurl,timeout=5.00,headers=heads) # Go get the sitemap
 if sitemapreq.status_code == 200: # Did we get a valid response back?
-    print('Valid response received')
+    print('Valid response received. Hang on a minute please.')
     if '/xml' in sitemapreq.headers['Content-Type']:
         thexml = xmltodict.parse(sitemapreq.text,xml_attribs=True)
         print('Total items: ' + str(len(thexml['urlset']['url'])))
+        totes = len(thexml['urlset']['url'])
         if len(thexml['urlset']['url']) > 499: #Slow down if there are a lot of URLs to avoid problems.
-            wait = 1
+            wait = 0.5
         listurl = []
         complete = []
         lineno = 0
         for key in thexml['urlset']['url']: # Create a list of urls from the sitemap
             time.sleep(wait) # Let's not flood requests?
             print('Working on url ' + key['loc'] + '\n')
-            page = requests.request('GET', key['loc'],timeout=5.00)
+            page = requests.request('GET', key['loc'],timeout=5.00,headers=heads)
             lineno += 1
             line = dict(
                 urlnumber = lineno,
