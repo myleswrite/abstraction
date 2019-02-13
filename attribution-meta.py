@@ -40,7 +40,7 @@ except:
 
 wait = 0.2
 heads = {
-    'User-Agent': 'attribution script',
+    'User-Agent': 'attribution meta check crawler',
     }
 
 print("Hello, let's start by getting a valid sitemap")
