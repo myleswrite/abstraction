@@ -107,5 +107,5 @@ if sitemapreq.status_code == 200: # Did we get a valid response back?
         else:
             print("Okay we're done here.")
     else:
-        print('Invalid response')
+        print('Invalid header response (probably no /xml in Content Type)')
 exit()
