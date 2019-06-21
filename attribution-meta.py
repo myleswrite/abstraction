@@ -61,29 +61,32 @@ if sitemapreq.status_code == 200: # Did we get a valid response back?
         for key in thexml['urlset']['url']: # Create a list of urls from the sitemap
             time.sleep(wait) # Let's not flood requests?
             print('Working on url ' + key['loc'] + '\n')
-            page = requests.request('GET', key['loc'],timeout=5.00,headers=heads)
-            lineno += 1
-            line = dict(
-                urlnumber = lineno,
-                address = key['loc'],
-                status = page.status_code,
-            )
-            if 'lastmod' in key : #Is lastmod blank?
-                line['modified'] = key['lastmod']
-            else:
-                line['modified'] = '0'
-            if page.status_code == 200: # Did we get a valid response back?
-                content = BeautifulSoup(page.text,'html.parser')
-                line['title'] = content.title.string
-                for tag in content.head.find_all("meta"):
-                    if tag.get("name", None) == "description": # Is this a meta description?
-                        line['metadescription'] = tag.get("content", None)
-                        line['metadescriptionlength'] = len(tag.get("content", None))
-            else:
-                line['title'] = ''
-                line['metadescription'] =''
-                line['metadescriptionlength'] = ''
-            complete.append(line)
+            try:
+                page = requests.request('GET', key['loc'],timeout=8.00,headers=heads)
+                lineno += 1
+                line = dict(
+                    urlnumber = lineno,
+                    address = key['loc'],
+                    status = page.status_code,
+                )
+                if 'lastmod' in key : #Is lastmod blank?
+                    line['modified'] = key['lastmod']
+                else:
+                    line['modified'] = '0'
+                if page.status_code == 200: # Did we get a valid response back?
+                    content = BeautifulSoup(page.text,'html.parser')
+                    line['title'] = content.title.string
+                    for tag in content.head.find_all("meta"):
+                        if tag.get("name", None) == "description": # Is this a meta description?
+                            line['metadescription'] = tag.get("content", None)
+                            line['metadescriptionlength'] = len(tag.get("content", None))
+                else:
+                    line['title'] = ''
+                    line['metadescription'] =''
+                    line['metadescriptionlength'] = ''
+                complete.append(line)
+            except requests.exceptions.RequestException as e:  # If there's an error print it
+                print (e)
         print(json.dumps(complete))
         # Are we saving this anywhere?
         dosave = input("Do you want to save a JSON and CSV — Type 'Y' for yes or anything else for no. ")
