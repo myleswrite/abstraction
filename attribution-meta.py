@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-#Import the required modules. I will tidy this up into a loop at some point
+#Import the required modules.
 
 try:  # For converting the XML to a dictionary
     import xmltodict
@@ -16,16 +16,6 @@ try:  # For waiting
     import time
 except:
     print("time is required")
-    exit()
-try:  # For saving as json
-    import json
-except:
-    print("json is required")
-    exit()
-try:  # For saving as CSV
-    import csv
-except:
-    print("csv is required")
     exit()
 try: # For getting the meta descriptions
     from bs4 import BeautifulSoup
@@ -56,59 +46,60 @@ if sitemapreq.status_code == 200: # Did we get a valid response back?
         if len(thexml['urlset']['url']) > 499: #Slow down if there are a lot of URLs to avoid problems.
             wait = 0.5
         listurl = []
-        complete = []
         lineno = 0
+        # Choose a filename for saving (will replace with a dialog at some point
+        print("What is the filename for saving the tab delimited file (without .txt)?")
+        savefile = input()
+        savefile += ".txt"
+        with open(savefile, 'a+') as w: # Add a header line
+            w.write("urlnumber\taddress\tstatus\ttitle\tmetadescription\tmetadescriptionlength\tmodified" + "\n")
+            w.close
         for key in thexml['urlset']['url']: # Create a list of urls from the sitemap
             time.sleep(wait) # Let's not flood requests?
             print('Working on url ' + key['loc'] + '\n')
             try:
-                page = requests.request('GET', key['loc'],timeout=8.00,headers=heads)
-                lineno += 1
-                line = dict(
-                    urlnumber = lineno,
-                    address = key['loc'],
-                    status = page.status_code,
-                )
-                if 'lastmod' in key : #Is lastmod blank?
-                    line['modified'] = key['lastmod']
-                else:
-                    line['modified'] = '0'
-                if page.status_code == 200: # Did we get a valid response back?
-                    content = BeautifulSoup(page.text,'html.parser')
-                    line['title'] = content.title.string
-                    for tag in content.head.find_all("meta"):
-                        if tag.get("name", None) == "description": # Is this a meta description?
-                            line['metadescription'] = tag.get("content", None)
-                            line['metadescriptionlength'] = len(tag.get("content", None))
-                else:
-                    line['title'] = ''
-                    line['metadescription'] =''
-                    line['metadescriptionlength'] = ''
-                complete.append(line)
+                if '.pdf' not in key['loc']:
+                    page = requests.get(key['loc'],timeout=8.00,headers=heads)
+                    print(page.text)
+                    lineno += 1
+                    line = dict(
+                        urlnumber = lineno,
+                        address = key['loc'],
+                        status = page.status_code,
+                    )
+                    if 'lastmod' in key : #Is lastmod blank?
+                        line['modified'] = key['lastmod']
+                    else:
+                        line['modified'] = '0'
+                    if page.status_code == 200: # Did we get a valid response back?
+                        content = BeautifulSoup(page.text,'html.parser')
+                        try:
+                            line['title'] = content.title.string
+                        except:
+                            line['title'] = 'No title'
+                        line['metadescription'] = ''
+                        line['metadescriptionlength'] = ''
+                        try:
+                            for tag in content.head.find_all("meta"):
+                                if tag.get("name", None) == "description": # Is this a meta description?
+                                    line['metadescription'] = tag.get("content", None)
+                                    line['metadescriptionlength'] = len(line['metadescription'])
+                        except:
+                            line['metadescription'] = ''
+                            line['metadescriptionlength'] = '0'
+                        metadescript = str(line['metadescription'])
+                        metalen = str(line['metadescriptionlength'])
+                        print(metadescript + "\n")
+                    else:
+                        line['title'] = ''
+                        line['metadescription'] = ''
+                        line['metadescriptionlength'] = ''
+                    with open(savefile, 'a+') as w: # Add a new line to the file
+                        w.write(str(line['urlnumber']) + "\t" + str(line['address']) + "\t" + str(line['status']) + "\t" + str(line['title']) + "\t" + metadescript + "\t" + metalen + "\t" + str(line['modified']) + "\n")
+                        w.close
             except requests.exceptions.RequestException as e:  # If there's an error print it
                 print (e)
-        print(json.dumps(complete))
-        # Are we saving this anywhere?
-        dosave = input("Do you want to save a JSON and CSV — Type 'Y' for yes or anything else for no. ")
-        if dosave == 'Y' or dosave =='y': #If we're saving let's save
-            file_name = asksaveasfilename()
-            # Attempt to create a JSON
-            jsonname = file_name + '.json'
-            with open(jsonname,"w+") as f: # Write the JSON file
-                f.write(json.dumps(complete))
-                f.close
-            print("Saved JSON")
-            #Attempt to create a CSV
-            csvname = file_name + '.csv'
-            fieldnames = ['urlnumber','address','status','title','metadescription','metadescriptionlength','modified']
-            with open(csvname,'w+') as s: #Save the file
-                    w = csv.DictWriter(s, fieldnames = fieldnames)
-                    w.writeheader()
-                    for k in complete:
-                        w.writerow(k)
-            print("Saved CSV")
-        else:
-            print("Okay we're done here.")
     else:
         print('Invalid header response (probably no /xml in Content Type)')
+print("Finished.")
 exit()
